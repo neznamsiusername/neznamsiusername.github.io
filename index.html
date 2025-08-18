@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- lightweight-charts script is no longer needed as we don't render charts -->
   <style>
     :root {
       --body-bg: #121212; --bg: #121212; --header-bg: #121212; --input-bg: #1f1f1f;
@@ -92,6 +92,7 @@
     .message.user .message-bubble { background: var(--bubble-user); color: var(--bubble-user-text); padding: 10px 14px; border-radius: 16px; border-bottom-right-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); word-break: break-word; white-space: pre-wrap; width: fit-content; max-width: 100%; }
     .message.assistant { align-self: flex-start; align-items: flex-start;}
     .message.assistant .message-content { padding: 4px 0; color: var(--bubble-assistant-text); word-wrap: break-word; max-width: 100%; line-height: 1.5; }
+    /* The .chart-container class is no longer used but kept for potential future use */
     .chart-container { width: 100%; height: 450px; margin: 10px 0; border: 1px solid var(--input-border); border-radius: 8px; background-color: var(--input-bg); overflow: hidden; position: relative; }
     .message.assistant table { display: inline-block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1em 0; border: 1px solid var(--input-border); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); vertical-align: top; }
     .message.assistant th, .message.assistant td { padding: 10px 14px; border-bottom: 1px solid var(--input-border); text-align: left; white-space: nowrap; }
@@ -238,13 +239,10 @@
 
   <script>
     const BACKEND_URL = "https://chronostrader.onrender.com/chat";
-    // --- NEW: Define the base URL for API calls ---
-    const API_BASE_URL = "https://chronostrader.onrender.com";
     const CONVERSATION_PREFIX = 'ct_history_';
     const USER_NAME_KEY = 'ct_userName_v1';
     const MAX_TITLE_LENGTH = 40;
 
-    // ... (rest of the variable declarations are the same) ...
     const bodyEl = document.body;
     const mainEl = document.getElementById('main');
     const sidebar = document.getElementById('sidebar');
@@ -271,10 +269,9 @@
     let isSending = false;
     let currentConversationId = null;
     let currentHistory = [];
-    
-    // ... (all helper functions like populateSuggestionPrompts, getTimestamp, etc., are identical) ...
+
     const allSuggestionPrompts = [
-        { icon: '📈', summary: "Chart NVDA with MAs", full: "Plot a chart for NVDA over the last year with the 50 and 200 day moving averages" },
+        { icon: '📈', summary: "Analyze NVDA chart", full: "Analyze the chart for NVDA over the last year with the 50 and 200 day moving averages" },
         { icon: '⛓️', summary: 'Get TSLA options', full: "Show me the options chain for Tesla" },
         { icon: '📰', summary: "Check economic calendar", full: "Are there any high-impact news events today?" },
         { icon: '💡', summary: 'Explain a strategy', full: "Explain a simple moving average crossover strategy using a flowchart" },
@@ -308,33 +305,8 @@
         return DOMPurify.sanitize(dirtyHtml);
     }
 
-    function renderTradingChart(container, chartJson) {
-        if (chartJson && chartJson.error) {
-            container.innerHTML = `<p style="padding: 15px; color: var(--bubble-error-text);">${simpleSanitize(chartJson.error)}</p>`;
-            return;
-        }
-        if (!window.LightweightCharts || !container || !chartJson || !chartJson.data) {
-            container.innerHTML = "<p style='padding: 15px;'>Error: Invalid chart data received.</p>";
-            return;
-        }
-        const chartOptions = { layout: { background: { color: 'transparent' }, textColor: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim(), }, grid: { vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, horzLines: { color: 'rgba(255, 255, 255, 0.1)' }, }, crosshair: { mode: LightweightCharts.CrosshairMode.Normal }, rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.2)' }, timeScale: { borderColor: 'rgba(255, 255, 255, 0.2)' }, };
-        const chart = LightweightCharts.createChart(container, chartOptions);
-        const candleSeries = chart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350', });
-        candleSeries.setData(chartJson.data);
-        const maColors = ['#2962FF', '#FF6D00', '#9C27B0'];
-        if (chartJson.mas) {
-            Object.keys(chartJson.mas).forEach((key, index) => {
-                const maSeries = chart.addLineSeries({ color: maColors[index % maColors.length], lineWidth: 2, priceLineVisible: false, lastValueVisible: false, });
-                maSeries.setData(chartJson.mas[key]);
-            });
-        }
-        chart.timeScale().fitContent();
-        new ResizeObserver(entries => {
-            if (entries.length === 0 || entries[0].target !== container) { return; }
-            const { width, height } = entries[0].contentRect;
-            chart.applyOptions({ width, height });
-        }).observe(container);
-    }
+    // THIS FUNCTION IS NO LONGER USED, AS NO VISUAL CHARTS ARE RENDERED.
+    // function renderTradingChart(container, chartJson) { ... }
 
     function createMessageElement(role, textContent = '', timestamp = null, animate = true) {
         const messageDiv = document.createElement('div');
@@ -376,7 +348,6 @@
     }
     const removeAnalyzingIndicator = () => messagesContainer.querySelector('.analyzing-indicator')?.remove();
 
-    // ... (rest of the functions like saveCurrentConversation, loadConversation, etc., are identical) ...
     const saveCurrentConversation = () => {
         if (currentHistory.length < 1) return;
         const title = getConversationTitle(currentHistory);
@@ -424,8 +395,6 @@
         loadConversationsList();
         setTimeout(() => {
             document.querySelectorAll('.message.assistant .message-content').forEach(contentEl => {
-                if (contentEl.innerText.includes('[Chart for')) {
-                }
                 if (contentEl.innerText.includes('[flowchart]')) {
                     const flowchartMatch = contentEl.innerText.match(/\[flowchart\]\s*```([\s\S]*?)```\s*\[\/flowchart\]/);
                     if (flowchartMatch && flowchartMatch[1]) {
@@ -454,7 +423,6 @@
         populateSuggestionPrompts();
         loadConversationsList();
     };
-
 
     async function sendMessage() {
         const userInput = chatInput.value.trim();
@@ -497,48 +465,9 @@
                         const dataJson = line.substring(line.indexOf('data: ') + 6);
                         const data = JSON.parse(dataJson);
                         showAnalyzingIndicator(data.tool_name);
-
-                    // --- NEW LOGIC FOR THE CHART COMMAND ---
-                    } else if (line.startsWith('event: chart_render_command')) {
-                        // 1. Create the placeholder message bubble immediately
-                        if (!assistantMessageWrapper) {
-                            const result = createMessageElement('assistant', '');
-                            assistantMessageWrapper = result.messageElement;
-                            assistantContentDiv = result.contentElement;
-                        }
-                        showAnalyzingIndicator('chart');
-
-                        // 2. Get the chart parameters from the event
-                        const dataJson = line.substring(line.indexOf('data: ') + 6);
-                        const params = JSON.parse(dataJson);
-                        
-                        // Make sure moving averages are sent correctly
-                        if (params.moving_averages) {
-                            params.moving_averages = params.moving_averages.join(',');
-                        }
-
-                        // 3. Build the URL for the new API endpoint
-                        const apiUrl = new URL(`${API_BASE_URL}/api/chart-data`);
-                        apiUrl.search = new URLSearchParams(params).toString();
-                        
-                        // 4. Fetch the data from the new, reliable endpoint
-                        const chartDataResponse = await fetch(apiUrl);
-                        const chartJson = await chartDataResponse.json();
-                        
-                        // 5. Render the chart
-                        removeAnalyzingIndicator();
-                        const chartContainer = document.createElement('div');
-                        chartContainer.className = 'chart-container';
-                        assistantContentDiv.appendChild(chartContainer);
-                        renderTradingChart(chartContainer, chartJson);
-                        
-                        // 6. Update history
-                        if (!chartJson.error) {
-                            currentHistory.push({ role: 'model', parts: [{ text: `[Chart for ${chartJson.ticker || 'symbol'} was generated]` }] });
-                        } else {
-                            currentHistory.push({ role: 'model', parts: [{ text: `[Chart generation failed: ${chartJson.error}]` }] });
-                        }
-
+                    
+                    // --- THE SPECIAL CHART EVENT HANDLER IS NOW GONE, AS IT'S NO LONGER NEEDED ---
+                    
                     } else if (line.startsWith('event: content_chunk')) {
                         removeAnalyzingIndicator();
                         if (!assistantMessageWrapper) {
@@ -586,7 +515,6 @@
         }
     }
 
-    // ... (rest of the functions like updateSendButtonState, initializeApp, etc., are identical) ...
     const updateSendButtonState = () => {
         const hasContent = chatInput.value.trim() !== '';
         sendBtn.disabled = isSending || !hasContent;
