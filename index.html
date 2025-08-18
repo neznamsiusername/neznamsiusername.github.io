@@ -238,10 +238,13 @@
 
   <script>
     const BACKEND_URL = "https://chronostrader.onrender.com/chat";
+    // --- NEW: Define the base URL for API calls ---
+    const API_BASE_URL = "https://chronostrader.onrender.com";
     const CONVERSATION_PREFIX = 'ct_history_';
     const USER_NAME_KEY = 'ct_userName_v1';
     const MAX_TITLE_LENGTH = 40;
 
+    // ... (rest of the variable declarations are the same) ...
     const bodyEl = document.body;
     const mainEl = document.getElementById('main');
     const sidebar = document.getElementById('sidebar');
@@ -268,7 +271,8 @@
     let isSending = false;
     let currentConversationId = null;
     let currentHistory = [];
-
+    
+    // ... (all helper functions like populateSuggestionPrompts, getTimestamp, etc., are identical) ...
     const allSuggestionPrompts = [
         { icon: '📈', summary: "Chart NVDA with MAs", full: "Plot a chart for NVDA over the last year with the 50 and 200 day moving averages" },
         { icon: '⛓️', summary: 'Get TSLA options', full: "Show me the options chain for Tesla" },
@@ -372,6 +376,7 @@
     }
     const removeAnalyzingIndicator = () => messagesContainer.querySelector('.analyzing-indicator')?.remove();
 
+    // ... (rest of the functions like saveCurrentConversation, loadConversation, etc., are identical) ...
     const saveCurrentConversation = () => {
         if (currentHistory.length < 1) return;
         const title = getConversationTitle(currentHistory);
@@ -450,6 +455,7 @@
         loadConversationsList();
     };
 
+
     async function sendMessage() {
         const userInput = chatInput.value.trim();
         if (userInput === '' || isSending) return;
@@ -491,30 +497,48 @@
                         const dataJson = line.substring(line.indexOf('data: ') + 6);
                         const data = JSON.parse(dataJson);
                         showAnalyzingIndicator(data.tool_name);
-                    } else if (line.startsWith('event: chart_data_generated')) {
-                        removeAnalyzingIndicator();
+
+                    // --- NEW LOGIC FOR THE CHART COMMAND ---
+                    } else if (line.startsWith('event: chart_render_command')) {
+                        // 1. Create the placeholder message bubble immediately
                         if (!assistantMessageWrapper) {
                             const result = createMessageElement('assistant', '');
                             assistantMessageWrapper = result.messageElement;
                             assistantContentDiv = result.contentElement;
                         }
-                        
-                        // --- THIS IS THE FIX FOR CHART DATA ---
-                        const dataJson = line.substring(line.indexOf('data: ') + 6);
-                        const eventPayload = JSON.parse(dataJson);
-                        const chartJson = eventPayload.chart_data;
-                        // --- END OF FIX ---
+                        showAnalyzingIndicator('chart');
 
+                        // 2. Get the chart parameters from the event
+                        const dataJson = line.substring(line.indexOf('data: ') + 6);
+                        const params = JSON.parse(dataJson);
+                        
+                        // Make sure moving averages are sent correctly
+                        if (params.moving_averages) {
+                            params.moving_averages = params.moving_averages.join(',');
+                        }
+
+                        // 3. Build the URL for the new API endpoint
+                        const apiUrl = new URL(`${API_BASE_URL}/api/chart-data`);
+                        apiUrl.search = new URLSearchParams(params).toString();
+                        
+                        // 4. Fetch the data from the new, reliable endpoint
+                        const chartDataResponse = await fetch(apiUrl);
+                        const chartJson = await chartDataResponse.json();
+                        
+                        // 5. Render the chart
+                        removeAnalyzingIndicator();
                         const chartContainer = document.createElement('div');
                         chartContainer.className = 'chart-container';
                         assistantContentDiv.appendChild(chartContainer);
                         renderTradingChart(chartContainer, chartJson);
                         
+                        // 6. Update history
                         if (!chartJson.error) {
                             currentHistory.push({ role: 'model', parts: [{ text: `[Chart for ${chartJson.ticker || 'symbol'} was generated]` }] });
                         } else {
                             currentHistory.push({ role: 'model', parts: [{ text: `[Chart generation failed: ${chartJson.error}]` }] });
                         }
+
                     } else if (line.startsWith('event: content_chunk')) {
                         removeAnalyzingIndicator();
                         if (!assistantMessageWrapper) {
@@ -562,6 +586,7 @@
         }
     }
 
+    // ... (rest of the functions like updateSendButtonState, initializeApp, etc., are identical) ...
     const updateSendButtonState = () => {
         const hasContent = chatInput.value.trim() !== '';
         sendBtn.disabled = isSending || !hasContent;
