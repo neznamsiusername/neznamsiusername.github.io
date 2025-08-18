@@ -272,7 +272,6 @@
     let currentConversationId = null;
     let currentHistory = [];
 
-    // *** UPDATED: Added a new prompt for the options tool ***
     const allSuggestionPrompts = [
         { icon: '📈', summary: "Chart NVDA with MAs", full: "Plot a chart for NVDA over the last year with the 50 and 200 day moving averages" },
         { icon: '⛓️', summary: 'Get TSLA options', full: "Show me the options chain for Tesla" },
@@ -421,12 +420,9 @@
         mainEl.classList.remove('splash-visible');
         mainEl.appendChild(inputArea);
         loadConversationsList();
-        // After loading, we need to find and render any charts/flowcharts
         setTimeout(() => {
             document.querySelectorAll('.message.assistant .message-content').forEach(contentEl => {
-                // This is a simplified re-render logic. A more robust system would store tool calls separately.
                 if (contentEl.innerText.includes('[Chart for')) {
-                    // This part is tricky without changing the history format. For now, it shows the placeholder.
                 }
                 if (contentEl.innerText.includes('[flowchart]')) {
                     const flowchartMatch = contentEl.innerText.match(/\[flowchart\]\s*```([\s\S]*?)```\s*\[\/flowchart\]/);
@@ -505,13 +501,18 @@
                             assistantMessageWrapper = result.messageElement;
                             assistantContentDiv = result.contentElement;
                         }
+                        
+                        // --- THE ROBUST JSON FIX IS HERE ---
                         const dataJson = line.substring(line.indexOf('data: ') + 6);
-                        const chartJson = JSON.parse(dataJson);
+                        const eventPayload = JSON.parse(dataJson);
+                        const chartJson = eventPayload.chart_data;
+                        // --- END OF FIX ---
+
                         const chartContainer = document.createElement('div');
                         chartContainer.className = 'chart-container';
                         assistantContentDiv.appendChild(chartContainer);
                         renderTradingChart(chartContainer, chartJson);
-                        // Store a placeholder in history for re-loading
+                        
                         if (!chartJson.error) {
                             currentHistory.push({ role: 'model', parts: [{ text: `[Chart for ${chartJson.ticker || 'symbol'} was generated]` }] });
                         } else {
@@ -615,7 +616,7 @@
         startNewConversation();
         updateSendButtonState();
         adjustTextareaHeight();
-        mermaid.initialize({ startOnLoad: false, theme: 'base', fontFamily: 'Segoe UI', themeVariables: { background: '#121212', primaryColor: '#1f1f1f', primaryTextColor: '#e4e4e7', primaryBorderColor: '#10b981', lineColor: '#4a4a4a', secondaryColor: '#3f3f46', tertiaryColor: '#1f1f1f' } });
+        mermaid.initialize({ startOnLoad: false, theme: 'base', fontFamily: 'Segoe UI', themeVariables: { background: '#121212', primaryColor: '#1f1f1f', primaryTextColor: '#e4e4e7', primaryBorderColor: '#10b981', lineColor: '#4a4a4a', secondaryColor: '#3f3f36', tertiaryColor: '#1f1f1f' } });
     }
 
     initializeApp();
