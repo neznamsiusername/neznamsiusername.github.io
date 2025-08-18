@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- All head content is identical to your version -->
   <meta charset="UTF-8" />
   <meta name="theme-color" content="#1f1f1f">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -13,7 +12,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <style>
-    /* All CSS is identical to your version */
     :root {
       --body-bg: #121212; --bg: #121212; --header-bg: #121212; --input-bg: #1f1f1f;
       --suggestion-bg: #121212; --popup-bg: #121212; --popup-input-bg: #131313;
@@ -164,7 +162,6 @@
   </style>
 </head>
 <body>
-  <!-- All HTML structure is identical to your version -->
   <div id="sidebar">
       <div class="sidebar-header">
           <a href="#" class="sidebar-logo-link">
@@ -502,7 +499,7 @@
                             assistantContentDiv = result.contentElement;
                         }
                         
-                        // --- THE ROBUST JSON FIX IS HERE ---
+                        // --- THIS IS THE FIX FOR CHART DATA ---
                         const dataJson = line.substring(line.indexOf('data: ') + 6);
                         const eventPayload = JSON.parse(dataJson);
                         const chartJson = eventPayload.chart_data;
